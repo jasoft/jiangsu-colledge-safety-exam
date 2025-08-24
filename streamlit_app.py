@@ -67,6 +67,17 @@ def run_main_script(userid):
         return False, str(e)
 
 
+def on_url_change():
+    """URL输入变化时的回调函数"""
+    if "url_input" in st.session_state:
+        url = st.session_state.url_input.strip()
+        if url:
+            userid = extract_userid_from_url(url)
+            st.session_state.current_userid = userid
+        else:
+            st.session_state.current_userid = None
+
+
 def main():
     st.set_page_config(
         page_title="江苏省大学新生安全知识教育自动完成工具",
@@ -74,10 +85,88 @@ def main():
         layout="wide",
     )
 
+    # 初始化session state
+    if "current_userid" not in st.session_state:
+        st.session_state.current_userid = None
+
     st.title("🎓 江苏省大学新生安全知识教育自动完成工具")
     st.markdown("---")
 
-    # 说明文档
+    # URL输入部分移到最上面
+    st.subheader("📝 输入登录后的URL")
+    url_input = st.text_input(
+        "请粘贴完整的URL：",
+        placeholder="http://wap.xiaoyuananquantong.com/guns-vip-main/wap/jshome?userid=12345678901234567890",
+        help="URL应该包含userid参数",
+        key="url_input",
+        on_change=on_url_change,
+    )
+
+    # URL验证和userid提取 - 实时更新
+    userid = st.session_state.current_userid
+
+    # 实时更新URL状态
+    if url_input.strip():
+        # 确保实时更新userid
+        current_userid = extract_userid_from_url(url_input.strip())
+        st.session_state.current_userid = current_userid
+        userid = current_userid
+
+        if userid:
+            st.success(f"✅ 成功提取到用户ID: `{userid}`")
+        else:
+            st.error("❌ 无法从URL中提取userid参数，请检查URL是否正确")
+            st.info("💡 确保URL包含类似 `?userid=12345678901234567890` 的参数")
+    elif url_input:  # 如果有输入但只是空格
+        st.warning("⚠️ 请输入有效的URL")
+        st.session_state.current_userid = None
+        userid = None
+    else:
+        st.info("💡 请在上方输入框中粘贴登录后的完整URL")
+        st.session_state.current_userid = None
+        userid = None
+
+    # 自动完成按钮始终显示
+    st.markdown("---")
+    if st.button(
+        "🚀 开始自动完成",
+        type="primary",
+        use_container_width=True,
+        disabled=(userid is None),
+    ):
+        if userid:
+            with st.spinner("正在执行自动完成流程，请稍候..."):
+                # 创建进度条
+                progress_bar = st.progress(0)
+                status_text = st.empty()
+
+                # 更新进度
+                status_text.text("正在启动脚本...")
+                progress_bar.progress(10)
+
+                # 运行主脚本
+                success, output = run_main_script(userid)
+
+                progress_bar.progress(100)
+
+                if success:
+                    st.success("🎉 自动完成流程执行成功！")
+
+                    # 显示执行结果
+                    with st.expander("📋 执行日志", expanded=False):
+                        st.code(output, language="text")
+
+                else:
+                    st.error("❌ 执行过程中出现错误")
+
+                    # 显示错误信息
+                    with st.expander("🔍 错误详情", expanded=True):
+                        st.code(output, language="text")
+        else:
+            st.warning("⚠️ 请先输入有效的URL")
+
+    # 使用说明放到下面
+    st.markdown("---")
     with st.expander("📖 使用说明", expanded=True):
         st.markdown("""
         ### 如何使用：
@@ -92,7 +181,7 @@ def main():
             st.warning("⚠️ 图片文件 images/image.png 未找到")
 
         st.markdown("""
-        3. 将URL粘贴到下方输入框中
+        3. 将URL粘贴到上方输入框中
         4. 点击"开始自动完成"按钮
 
         ### 注意事项：
@@ -101,55 +190,6 @@ def main():
         - 程序将自动完成所有课程学习和考试
         - 请耐心等待程序执行完成
         """)
-
-    # URL输入
-    st.subheader("📝 输入登录后的URL")
-    url_input = st.text_input(
-        "请粘贴完整的URL：",
-        placeholder="http://wap.xiaoyuananquantong.com/guns-vip-main/wap/jshome?userid=12345678901234567890",
-        help="URL应该包含userid参数",
-    )
-
-    # URL验证和userid提取
-    if url_input:
-        userid = extract_userid_from_url(url_input)
-
-        if userid:
-            st.success(f"✅ 成功提取到用户ID: `{userid}`")
-
-            # 显示执行按钮
-            if st.button("🚀 开始自动完成", type="primary", use_container_width=True):
-                with st.spinner("正在执行自动完成流程，请稍候..."):
-                    # 创建进度条
-                    progress_bar = st.progress(0)
-                    status_text = st.empty()
-
-                    # 更新进度
-                    status_text.text("正在启动脚本...")
-                    progress_bar.progress(10)
-
-                    # 运行主脚本
-                    success, output = run_main_script(userid)
-
-                    progress_bar.progress(100)
-
-                    if success:
-                        st.success("🎉 自动完成流程执行成功！")
-
-                        # 显示执行结果
-                        with st.expander("📋 执行日志", expanded=False):
-                            st.code(output, language="text")
-
-                    else:
-                        st.error("❌ 执行过程中出现错误")
-
-                        # 显示错误信息
-                        with st.expander("🔍 错误详情", expanded=True):
-                            st.code(output, language="text")
-
-        else:
-            st.error("❌ 无法从URL中提取userid参数，请检查URL是否正确")
-            st.info("💡 确保URL包含类似 `?userid=12345678901234567890` 的参数")
 
     # 页脚
     st.markdown("---")
