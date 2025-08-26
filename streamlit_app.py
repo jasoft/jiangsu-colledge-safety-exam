@@ -275,7 +275,7 @@ def main():
 
     # 使用说明
     st.markdown("---")
-    with st.expander("📖 详细使用说明", expanded=False):
+    with st.expander("📖 详细使用说明", expanded=True):
         st.markdown("""
         ### 📱 微信操作步骤：
 
