@@ -176,13 +176,42 @@ def main():
         )
 
         st.markdown("**第二步：输入使用码**")
-        registration_code = st.text_input(
-            "使用码",
-            placeholder="输入6位数字使用码",
-            help="请输入6位数字使用码",
-            label_visibility="collapsed",
-            max_chars=6,
-        )
+
+        # 使用列布局，左边是输入框，右边是购买链接
+        col1, col2 = st.columns([3, 1])
+
+        with col1:
+            registration_code = st.text_input(
+                "使用码",
+                placeholder="输入6位数字使用码",
+                help="请输入6位数字使用码",
+                label_visibility="collapsed",
+                max_chars=6,
+            )
+
+        with col2:
+            st.markdown(
+                """
+                <div style='margin-top: 2px;'>
+                    <a href='https://m.tb.cn/h.hEim8Fy?tk=b4LI4OGfvX2 MF278'
+                       target='_blank'
+                       style='
+                           display: inline-block;
+                           padding: 8px 12px;
+                           background-color: #ff6b6b;
+                           color: white;
+                           text-decoration: none;
+                           border-radius: 6px;
+                           font-size: 12px;
+                           text-align: center;
+                           white-space: nowrap;
+                       '>
+                       没有使用码？点此购买
+                    </a>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
     # URL验证和userid提取 - 实时更新
     userid = st.session_state.current_userid
